@@ -12,7 +12,15 @@ async_session_maker: async_sessionmaker[AsyncSession] | None = None
 
 async def init_db(database_url: str):
     global _engine, async_session_maker
-    _engine = create_async_engine(database_url, echo=False)
+    _engine = create_async_engine(
+        database_url,
+        echo=False,
+        pool_size=3,
+        max_overflow=2,
+        pool_timeout=30,
+        pool_recycle=1800,
+        pool_pre_ping=True,
+    )
     async_session_maker = async_sessionmaker(
         _engine, class_=AsyncSession, expire_on_commit=False
     )
