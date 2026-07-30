@@ -158,7 +158,7 @@ class IngestOrchestrator:
                     continue
 
                 dedup_hash = compute_dedup_hash(
-                    parsed.company, parsed.title, parsed.location
+                    parsed.url, parsed.title, parsed.company
                 )
                 existing = await db.execute(
                     select(JobPosting).where(JobPosting.dedup_hash == dedup_hash)

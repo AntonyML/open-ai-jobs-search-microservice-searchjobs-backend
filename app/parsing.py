@@ -42,8 +42,18 @@ def normalize(text: str) -> str:
     return text.strip()
 
 
-def compute_dedup_hash(company: Optional[str], title: str, location: Optional[str]) -> str:
-    key = f"{normalize(company or '')}|{normalize(title)}|{normalize(location or '')}"
+def compute_dedup_hash(url: str | None, title: str, company: str | None) -> str:
+    """
+    La identidad de un job es su URL.
+    Si no hay URL, fallback a title + company.
+    """
+    if url:
+        # Normalizar URL: quitar trailing slash
+        normalized = url.strip().rstrip("/")
+        key = normalized
+    else:
+        # Sin URL: usar title + company como identidad
+        key = f"{title.strip().lower()}|{(company or '').strip().lower()}"
     return hashlib.sha256(key.encode()).hexdigest()
 
 
