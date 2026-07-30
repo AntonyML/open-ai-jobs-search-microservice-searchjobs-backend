@@ -80,10 +80,11 @@ def infer_portal_from_url(url: Optional[str]) -> Optional[str]:
 
 STEM_JOBSCR_RE = re.compile(
     r"(?:🧑‍💼|💼|🔥|🚀|📌|🏢|💻|⚡)\s*\|\s*(?P<title>[^\n]+?)\s*\n"
-    r"(?:Empresa:\s*(?P<company>[^\n]+)\s*\n)?"
-    r"(?:Ubicaci[oó]n:\s*(?P<location>[^\n]+)\s*\n)?"
-    r"(?:Tags:\s*(?P<tags>[^\n]+)\s*\n)?"
-    r"(?:Salario:\s*(?P<salary>[^\n]+)\s*\n)?",
+    r"(?:.*?Empresa:\s*(?P<company>[^\n]+)\s*\n)?"
+    r"(?:.*?Categoría:\s*(?P<category>[^\n]+)\s*\n)?"
+    r"(?:.*?Ubicaci[oó]n:\s*(?P<location>[^\n]+)\s*\n)?"
+    r"(?:.*?Tags:\s*(?P<tags>[^\n]+)\s*\n)?"
+    r"(?:.*?Salario:\s*(?P<salary>[^\n]+)\s*\n)?",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -310,9 +311,10 @@ def parse_vacantes_remotas(text: str, channel: str, msg_id: int) -> Optional[Par
 
 SPAM_SIGNALS = [
     r"tglink\.io",
+    r"tinyurl\.com",
     r"download\s+(now|the\s+app)",
     r"no\s+(skills|experience|investment|degree)",
-    r"earn\s+(money|cash|\$)",
+    r"earn\s+(money|cash|[$₹])",
     r"make\s+money\s+(fast|online|from\s+home)",
     r"UPI\s+payment",
     r"referral\s+link",
@@ -455,11 +457,11 @@ STRUCTURED_EMOJI_RE = re.compile(
 )
 
 STEM_LATAM_RE = re.compile(
-    r"[🧑‍💼💼🔥🚀📌🏢]\s*\|\s*\*{1,2}\s*(?P<title>.*?)\s*\*{1,2}\s*\n"
-    r"(?:.*?\*{1,2}Empresa\*{0,2}:?\*{0,2}\s*(?P<company>.+?)\n)?"
-    r"(?:.*?\*{1,2}Ubicaci[oó]n\*{0,2}:?\*{0,2}\s*(?P<location>.+?)\n)?"
-    r"(?:.*?\*{1,2}Categor[ií]a\*{0,2}:?\*{0,2}\s*(?P<category>.+?)\n)?"
-    r"(?:.*?\*{1,2}Salario\*{0,2}:?\*{0,2}\s*(?P<salary>.+?)\n)?",
+    r"[🧑‍💼💼🔥🚀📌🏢]\s*\|\s*(?:\*{1,2}\s*)?(?P<title>[^\n]+?)(?:\s*\*{1,2})?\s*\n"
+    r"(?:.*?(?:\*{1,2})?Empresa(?:\*{0,2})?:?\s*(?P<company>[^\n]+?)\s*\n)?"
+    r"(?:.*?(?:\*{1,2})?Ubicaci[oó]n(?:\*{0,2})?:?\s*(?P<location>[^\n]+?)\s*\n)?"
+    r"(?:.*?(?:\*{1,2})?Categor[ií]a(?:\*{0,2})?:?\s*(?P<category>[^\n]+?)\s*\n)?"
+    r"(?:.*?(?:\*{1,2})?Salario(?:\*{0,2})?:?\s*(?P<salary>[^\n]+?)\s*\n)?",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -592,6 +594,9 @@ def parse_message(
         result = None
 
     if result is None and format_template != "freetext":
+        # Don't bypass spam filter: from_work_home returns None intentionally
+        if format_template == "from_work_home":
+            return None
         # Fallback to freetext for a best-effort parse
         try:
             result = parse_freetext(text, channel, msg_id)
