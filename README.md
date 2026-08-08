@@ -97,6 +97,16 @@ Telegram → [Este microservicio] → DB (ingested_jobs) ← [API Principal] ←
 **Sincronización**: DB compartida. Sin callbacks. Sin webhooks.
 El microservicio INSERTA, la API hace SELECT.
 
+### Cómo la dispara la API principal
+
+Cuando `POST /api/v1/jobs/search` (API principal) devuelve **menos de 5 resultados**, la API llama a
+`POST /api/v1/ingest` con `category_id` + `keywords` para refrescar la data. La URL se configura en la
+API principal con `INGEST_SERVICE_URL` (default `http://localhost:8001`).
+
+La categoría se infiere de la búsqueda del usuario: `stem_cr`, `stem_dk`, `latam_remote`,
+`freelance_intl`, `from_work_home` (default `stem_cr`). Mientras la ingesta corre, el frontend consulta
+`GET /api/v1/jobs/search/{ingest_job_id}/status` y vuelve a buscar cuando el job termina (`done`).
+
 ---
 
 ## Setup
@@ -162,6 +172,8 @@ uvicorn app.main:app --port 8001 --reload
 # Producción (1 worker — la cola interna maneja concurrencia)
 uvicorn app.main:app --port 8001 --workers 1
 ```
+
+> ⚙️ La **API principal** debe apuntar a este servicio con `INGEST_SERVICE_URL=http://localhost:8001` (o la URL de despliegue) en su `.env`.
 
 ---
 
@@ -362,11 +374,3 @@ Cuando se agrega un canal nuevo:
 | Registry en código, no en DB | Grupos cambian poco. Deploy = actualizar registry |
 
 ---
-
-## Lo que viene después (V2)
-
-- [ ] RSS collector como backup de plataforma
-- [ ] LLM pequeño (Haiku) como fallback del regex
-- [ ] Métricas de calidad por canal (jobs/día, parsing success rate)
-- [ ] Health check de canales al startup
-- [ ] Más categorías y grupos (Dinamarca, México, Remoto global)
