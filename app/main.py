@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import init_db, close_db, async_session_maker
+from app.database import init_db, close_db
 from app.telegram import TelegramFetcher
 from app.ingestion import IngestOrchestrator
 from app.routes import router, setup_routes
@@ -49,9 +49,12 @@ async def ttl_loop():
     while True:
         await asyncio.sleep(settings.ttl_cleanup_interval_minutes * 60)
         try:
-            maker = async_session_maker
-            if maker:
-                async with maker() as db:
+            # Referencia viva: init_db() reasigna app.database.async_session_maker
+            # después del import de este módulo, por lo que hay que leerla por
+            # ciclo y no capturarla a nivel de módulo (donde siempre es None).
+            from app.database import async_session_maker
+            if async_session_maker:
+                async with async_session_maker() as db:
                     await clean_expired_jobs(db, settings.job_ttl_hours)
         except Exception:
             logger.exception("ttl_cleanup_failed")

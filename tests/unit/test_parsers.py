@@ -18,6 +18,8 @@ from tests.fixtures import (
     WORKHOME_SPAM,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestSTEMCRParser:
     """Canal: STEMJobsCR — formato '🧑‍💼 | Title' + Empresa/Ubicación."""

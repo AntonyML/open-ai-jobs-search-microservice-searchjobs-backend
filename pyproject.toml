@@ -16,6 +16,24 @@ dependencies = [
     "structlog>=24.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "aiosqlite>=0.20",
+    "pytest-cov>=5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers"
+markers = [
+    "unit: Lógica pura sin I/O (parsing, dedup, reglas, schemas, alert).",
+    "integration: Tests con I/O real del backend (DB + orquestación).",
+    "e2e: Pruebas de contrato HTTP/API.",
+]
+
 [tool.setuptools.packages.find]
 include = ["app*"]
 exclude = ["sessions*", "scripts*"]

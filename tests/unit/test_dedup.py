@@ -3,6 +3,8 @@
 import pytest
 from app.parsing import compute_dedup_hash
 
+pytestmark = pytest.mark.unit
+
 
 class TestDedupHash:
 

@@ -34,11 +34,11 @@ def get_poll_interval(demand_score: int, category_id: str) -> int:
 
 def infer_category(keywords: str, location: str) -> str:
     kw_lower = keywords.lower()
-    loc_lower = location.lower()
+    loc_lower = location.lower().strip()
     for cat_id, cat in GROUP_REGISTRY.items():
         if any(k in kw_lower for k in cat.get("search_keywords", [])):
             return cat_id
-        if loc_lower in cat["label"].lower():
+        if loc_lower and any(k in loc_lower for k in cat.get("search_keywords", [])):
             return cat_id
     return "stem_cr"
 

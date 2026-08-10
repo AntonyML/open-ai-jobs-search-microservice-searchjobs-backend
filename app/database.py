@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.engine import make_url
 
 
 class Base(DeclarativeBase):
@@ -12,15 +13,19 @@ async_session_maker: async_sessionmaker[AsyncSession] | None = None
 
 async def init_db(database_url: str):
     global _engine, async_session_maker
-    _engine = create_async_engine(
-        database_url,
-        echo=False,
-        pool_size=3,
-        max_overflow=2,
-        pool_timeout=30,
-        pool_recycle=1800,
-        pool_pre_ping=True,
-    )
+    # QueuePool-only args (pool_size/max_overflow/pool_timeout) no aplican a
+    # SQLite (StaticPool); gatearlos evita TypeError en tests y dev local.
+    url = make_url(database_url)
+    pool_kwargs = {}
+    if not url.get_backend_name().startswith("sqlite"):
+        pool_kwargs.update(
+            pool_size=3,
+            max_overflow=2,
+            pool_timeout=30,
+            pool_recycle=1800,
+            pool_pre_ping=True,
+        )
+    _engine = create_async_engine(database_url, echo=False, **pool_kwargs)
     async_session_maker = async_sessionmaker(
         _engine, class_=AsyncSession, expire_on_commit=False
     )
